@@ -5,6 +5,7 @@ Rest API Repository [Model-Store](https://github.com/pavan71198/Model-Store)
 
 ## Features of the web client
 - Login, Register, Models List, Upload Model and Download Model pages
+- Renaming and Deleting models
 - Axios for Rest API requests
 - JWT Token stored in Local Storage used for authorizing API requests.
 - Three.JS for rendering the 3D Models

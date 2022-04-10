@@ -10,38 +10,31 @@ import "bootstrap/dist/css/bootstrap.min.css";
 const required = (value) => {
 	if (!value) {
 		return (
-			<div className="alert alert-danger" role="alert">
+			<div className="alert alert-danger mt-2" role="alert">
 				This field is required!
 			</div>
 		);
 	}
 };
 
-const Login = ({getUser}) => {
+const Login = ({getUser, currentUser}) => {
 	const navigate = useNavigate();
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [message, setMessage] = useState("");
 
 	let checkBtn;
 	let form;
 
-	const onChangeUsername = (e) => {
-		setUsername(e.target.value);
-	};
-
-	const onChangePassword = (e) => {
-		setPassword(e.target.value);
-	};
-
-	const handleLogin = (e) => {
-		e.preventDefault();
+	const handleLogin = (event) => {
+		event.preventDefault();
 		setMessage("");
 		setLoading(true);
 		form.validateAll();
 		if (checkBtn.context._errors.length === 0) {
-			authService.login(username, password).then(
+			authService.login(
+				form.getValues().username,
+				form.getValues().password
+			).then(
 				() => {
 					getUser();
 					navigate("/");
@@ -68,11 +61,20 @@ const Login = ({getUser}) => {
 			<div className="col-md-4"/>
 			<div className="col-md-4">
 				<div className="card card-body">
+					<h5
+						className="card-title text-center"
+						style={currentUser ?
+							{}:{display: "none"}}
+					>
+						You are already logged in
+					</h5>
 					<Form
 						onSubmit={handleLogin}
 						ref={ref => {
 							form = ref;
 						}}
+						style={currentUser ?
+							{display: "none"}:{}}
 					>
 						<div className="form-group">
 							<label htmlFor="username">Username</label>
@@ -80,8 +82,6 @@ const Login = ({getUser}) => {
 								type="text"
 								className="form-control"
 								name="username"
-								value={username}
-								onChange={onChangeUsername}
 								validations={[required]}
 							/>
 						</div>
@@ -91,8 +91,6 @@ const Login = ({getUser}) => {
 								type="password"
 								className="form-control"
 								name="password"
-								value={password}
-								onChange={onChangePassword}
 								validations={[required]}
 							/>
 						</div>
@@ -110,7 +108,7 @@ const Login = ({getUser}) => {
 						</div>
 						{message && (
 							<div className="form-group">
-								<div className="alert alert-danger" role="alert">
+								<div className="alert alert-danger mt-2" role="alert">
 									{message}
 								</div>
 							</div>

@@ -43,6 +43,16 @@ class ModelStoreService {
 		);
 	}
 
+	deleteModel(id) {
+		let headers = authService.getHeader();
+		return axios.delete(
+			API_URL+"/model/delete/"+id,
+			{
+				headers:headers
+			}
+		);
+	}
+
 	modelInfo(modelId) {
 		let headers = authService.getHeader();
 		return axios.get(

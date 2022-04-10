@@ -1,9 +1,11 @@
 import React, {useState} from "react";
 import ModelViewer from "../components/ModelViewer";
 import modelStoreService from "../services/modelStoreService";
+import {useNavigate} from "react-router-dom";
 
 let uploadFile;
-const UploadModel = () => {
+const UploadModel = ({currentUser}) => {
+	const navigate = useNavigate();
 	const [fileUrl, setFileUrl] = useState(null);
 	const [fileValid, setFileValid] = useState(false);
 	const [uploading, setUploading] = useState(false);
@@ -17,7 +19,9 @@ const UploadModel = () => {
 
 	const gltfCheck = (loaded) => {
 		if (loaded) {
-			setFileValid(true);
+			if (currentUser) {
+				setFileValid(true);
+			}
 		} else {
 			setFileValid(false);
 			setFileUrl(null);
@@ -37,7 +41,7 @@ const UploadModel = () => {
 				if (response.status === 200) {
 					console.log("Uploaded");
 					setUploading(false);
-					window.location.reload();
+					navigate("/files")
 				}
 			})
 			.catch((error) => {

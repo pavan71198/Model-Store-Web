@@ -7,76 +7,63 @@ import authService from "../services/authService";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const required = value => {
+const required = (value) => {
 	if (!value) {
 		return (
-			<div className="alert alert-danger" role="alert">
+			<div className="alert alert-danger mt-2" role="alert">
 				This field is required!
 			</div>
 		);
 	}
 };
 
-const nameCheck = value => {
+const nameCheck = (value) => {
 	if (value.length < 3 || value.length > 50) {
 		return (
-			<div className="alert alert-danger" role="alert">
+			<div className="alert alert-danger mt-2" role="alert">
 				The name must be between 3 and 50 characters.
 			</div>
 		);
 	}
 };
 
-const usernameCheck = value => {
+const usernameCheck = (value) => {
 	if (value.length < 3 || value.length > 20) {
 		return (
-			<div className="alert alert-danger" role="alert">
+			<div className="alert alert-danger mt-2" role="alert">
 				The username must be between 3 and 20 characters.
 			</div>
 		);
 	}
 };
-const passwordCheck = value => {
-	if (value.length < 6 || value.length > 40) {
+const passwordCheck = (value) => {
+	if (value.length < 8 || value.length > 40) {
 		return (
-			<div className="alert alert-danger" role="alert">
-				The password must be between 6 and 40 characters.
+			<div className="alert alert-danger mt-2" role="alert">
+				The password must be between 8 and 40 characters.
 			</div>
 		);
 	}
 };
 
-const Register = ({getUser}) => {
+const Register = ({getUser, currentUser}) => {
 	const navigate = useNavigate();
-	const [name, setName] = useState("");
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
 	const [successful, setSuccessful] = useState(false);
 	const [message, setMessage] = useState("");
 
 	let checkBtn;
 	let form;
 
-	const onChangeName = (e) => {
-		setName(e.target.value);
-	}
-	const onChangeUsername = (e) => {
-		setUsername(e.target.value);
-	}
-	const onChangePassword = (e) => {
-		setPassword(e.target.value);
-	}
 	const handleRegister = (e) => {
 		e.preventDefault();
 		setMessage("");
 		setSuccessful(false);
-
 		form.validateAll();
 		if (checkBtn.context._errors.length === 0) {
 			authService.register(
-				username,
-				password,
-				name
+				form.getValues().username,
+				form.getValues().password,
+				form.getValues().name
 			).then(
 				() => {
 					setMessage("Registered Successfully");
@@ -103,11 +90,20 @@ const Register = ({getUser}) => {
 			<div className="col-md-4"/>
 			<div className="col-md-4">
 				<div className="card card-body">
+					<h5
+						className="card-title text-center"
+						style={currentUser ?
+							{}:{display: "none"}}
+					>
+						You are already logged in
+					</h5>
 					<Form
 						onSubmit={handleRegister}
 						ref={ref => {
 							form = ref;
 						}}
+						style={currentUser ?
+							{display: "none"}:{}}
 					>
 						{!successful && (
 							<div>
@@ -117,8 +113,6 @@ const Register = ({getUser}) => {
 										type="text"
 										className="form-control"
 										name="name"
-										value={name}
-										onChange={onChangeName}
 										validations={[required, nameCheck]}
 									/>
 								</div>
@@ -128,8 +122,6 @@ const Register = ({getUser}) => {
 										type="text"
 										className="form-control"
 										name="username"
-										value={username}
-										onChange={onChangeUsername}
 										validations={[required, usernameCheck]}
 									/>
 								</div>
@@ -139,8 +131,6 @@ const Register = ({getUser}) => {
 										type="password"
 										className="form-control"
 										name="password"
-										value={password}
-										onChange={onChangePassword}
 										validations={[required, passwordCheck]}
 									/>
 								</div>
@@ -156,7 +146,7 @@ const Register = ({getUser}) => {
 									className={
 										successful
 											? "alert alert-success"
-											: "alert alert-danger"
+											: "alert alert-danger mt-2"
 									}
 									role="alert"
 								>

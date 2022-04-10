@@ -1,23 +1,47 @@
 import React, {useState} from "react";
 import ModelViewer from "../components/ModelViewer";
 import modelStoreService from "../services/modelStoreService";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
+import Form from "react-validation/build/form";
+import Input from "react-validation/build/input";
+import CheckButton from "react-validation/build/button";
 
 let downloading = false;
 
+const required = value => {
+	if (!value) {
+		return (
+			<div className="alert alert-danger mt-2" >
+				This field is required!
+			</div>
+		);
+	}
+};
+
+const fileNameLengthCheck = (value) => {
+	if (value.length < 6 || value.length > 30) {
+		return (
+			<div className="alert alert-danger mt-2" role="alert">
+				The filename must be between 6 and 30 characters.
+			</div>
+		);
+	}
+}
+
 const DownloadModel = () => {
-	const [fileUrl, setFileUrl] = useState(null);
+	const navigate = useNavigate();
+	const [fileUrl, setFileUrl] = useState("");
 	const [fileInfo, setFileInfo] = useState(null);
 	const [updating, setUpdating] = useState(false);
 	const [downloadProgress, setDownloadProgress] = useState(0);
 	const [downloadError, setDownloadError] = useState(false);
 	const {modelId} = useParams();
 
-	console.log(modelId);
+	let form;
+	let checkBtn;
 
 	const gltfCheck = (loaded) => {
-		if (loaded) {
-		} else {
+		if (!loaded) {
 			setFileUrl(null);
 		}
 	}
@@ -33,7 +57,6 @@ const DownloadModel = () => {
 			modelStoreService.modelInfo(modelId)
 				.then(
 					(data) => {
-						console.log(data);
 						setFileInfo(data);
 					})
 				.then(() => {
@@ -59,15 +82,62 @@ const DownloadModel = () => {
 					console.log("Download Failed");
 					downloading = false;
 					setDownloadError(true);
-				})
+				});
 		}
 		return null;
 	}
 
-	const handleUpdate = (e) => {
-		e.preventDefault()
+	const handleUpdate = (event) => {
+		event.preventDefault();
+		form.validateAll();
+		if (checkBtn.context._errors.length === 0) {
+			setUpdating(true);
+			modelStoreService.updateModel(
+				modelId,
+				new Blob([]),
+				form.getValues().fileName,
+				()=>{}
+			).then(
+				(response) => {
+					if (response.status === 200){
+						modelStoreService.modelInfo(modelId)
+							.then(
+								(data) => {
+									setFileInfo(data);
+									setUpdating(false);
+								})
+							.catch((error) => {
+								console.log(error);
+								console.log("Refreshing File Info Failed");
+								setUpdating(false);
+							})
+					}
+				}
+			).catch((error) => {
+				console.log(error);
+				console.log("Updating File Name Failed");
+				setUpdating(false);
+			});
+		}
 	}
 
+	const handleDelete = (event) => {
+		event.preventDefault();
+		setUpdating(true);
+		modelStoreService.deleteModel(modelId)
+			.then(
+				(response) => {
+					if (response.status === 200) {
+						navigate("/files");
+					}
+					setUpdating(false);
+				}
+			).catch((error) => {
+				console.log(error);
+				console.log("Deleting File Failed");
+				setUpdating(false);
+			});
+	}
 
 	return (
 		<div className="container-fluid">
@@ -98,6 +168,7 @@ const DownloadModel = () => {
 									>
 										{downloadProgress}%
 									</div>
+
 								</div>
 							</div>
 							:
@@ -106,20 +177,36 @@ const DownloadModel = () => {
 									<p className="h3 text-center">
 										{fileInfo.fileName}
 									</p>
-									<form className="row align-items-center" onSubmit={handleUpdate}>
+									<Form
+										className="row align-items-start"
+										ref={ref => {
+											form = ref;
+										}}
+										onSubmit={handleUpdate}>
 										<div className="col-10">
-											<input className="form-control" type="text" name="fileName"
-											       placeholder={fileInfo.fileName}/>
+											<Input
+												className="form-control"
+												type="text"
+												name="fileName"
+												placeholder={fileInfo.fileName}
+												validations={[required, fileNameLengthCheck]}
+											/>
 										</div>
 										<div className="col-2">
 											{
 												updating ?
-													<button type="submit" className="btn btn-primary">Rename</button>
-													:
 													<button className="btn btn-primary disabled">Rename</button>
+													:
+													<button type="submit" className="btn btn-primary">Rename</button>
 											}
 										</div>
-									</form>
+										<CheckButton
+											style={{display: "none"}}
+											ref={c => {
+												checkBtn = c;
+											}}
+										/>
+									</Form>
 									<br/>
 
 								</div>
@@ -139,8 +226,14 @@ const DownloadModel = () => {
 							{
 								fileInfo ?
 									<div className="card-body">
-										<a href={fileUrl} download={fileInfo.fileName}
-										   className="btn btn-primary">Download</a>
+										<a href={fileUrl}
+										   download={fileInfo.fileName}
+										   className="btn btn-primary">
+											Download
+										</a>
+										<div className="btn btn-danger ms-3" onClick={handleDelete}>
+											Delete
+										</div>
 									</div>
 									: null
 							}

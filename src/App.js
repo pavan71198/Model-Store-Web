@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Routes, Route, NavLink} from "react-router-dom";
+import {Routes, Route, NavLink, Navigate} from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import authService from "./services/authService";
 import Login from "./pages/Login";
@@ -11,7 +11,7 @@ import UploadModel from "./pages/UploadModel";
 import DownloadModel from "./pages/DownloadModel";
 
 const App = () => {
-	const [currentUser, setCurrentUser] = useState(null);
+	const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem("user")));
 
 	const logout = () => {
 		authService.logout();
@@ -27,9 +27,9 @@ const App = () => {
 	}
 
 	const getUser = () => {
-		let user = JSON.parse(localStorage.getItem("user"));
+		let user = currentUser;
 		let headers = authService.getHeader();
-		if (headers && !currentUser) {
+		if (headers && !user) {
 			axios.get(
 				API_URL + "/user/info",
 				{headers: headers})
@@ -45,7 +45,6 @@ const App = () => {
 				})
 			setCurrentUser(user);
 		}
-
 	}
 
 	useEffect(() => {
@@ -62,7 +61,7 @@ const App = () => {
 					{
 						currentUser ?
 							<li className="nav-item">
-								<NavLink to={"/profile"} className={navLinkClasses}>{currentUser.name}</NavLink>
+								<NavLink to={"/files"} className={navLinkClasses}>{currentUser.name}</NavLink>
 							</li>
 							:
 							<li className="nav-item">
@@ -84,13 +83,23 @@ const App = () => {
 				</ul>
 			</nav>
 			<div className="container mt-3">
-				<Routes>
-					<Route path="/" element={<UploadModel/>}/>
-					<Route path="/login" element={<Login getUser={getUser}/>}/>
-					<Route path="/register" element={<Register getUser={getUser}/>}/>
-					<Route path="/profile" element={<ModelStoreList/>}/>
-					<Route path="/:modelId" element={<DownloadModel/>}/>
-				</Routes>
+				{currentUser ?
+					<Routes>
+						<Route exact path="/" element={<UploadModel currentUser={currentUser}/>}/>
+						<Route exact path="/login" element={<Login getUser={getUser} currentUser={currentUser}/>}/>
+						<Route exact path="/register" element={<Register getUser={getUser} currentUser={currentUser}/>}/>
+						<Route exact path="/files" element={<ModelStoreList/>}/>
+						<Route path="/:modelId" element={<DownloadModel/>}/>
+					</Routes>
+					:
+					<Routes>
+						<Route exact path="/" element={<UploadModel currentUser={currentUser}/>}/>
+						<Route exact path="/login" element={<Login getUser={getUser} currentUser={currentUser}/>}/>
+						<Route exact path="/register" element={<Register getUser={getUser} currentUser={currentUser}/>}/>
+						<Route path="*" element={<Navigate to="/login" replace />} />
+					</Routes>
+				}
+
 			</div>
 		</div>
 
